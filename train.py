@@ -37,6 +37,10 @@ class SimpleNet(nn.Module):
 # Leyendo los datos y escogiendo un problema
 df = pd.read_csv("FeynmanEquations.csv")
 names = df["Filename"].dropna()
+names = names[~names.isin(os.listdir("NN_models"))]
+
+names = names[names.isin(os.listdir("Feynman_with_units"))]
+
 
 def train(proc_id, name_set):
     epochs = 1000
@@ -103,7 +107,7 @@ def train(proc_id, name_set):
 
 
 def main():
-    num_procs = 3
+    num_procs = 4
 
     procs = []
 
