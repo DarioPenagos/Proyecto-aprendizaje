@@ -35,7 +35,7 @@ def P1(f, X, n):
 
 
 def P0(f, X, n):
-    X[n] *= -1
+    X[:,n] *= -1
     return f(X)
 
 
@@ -72,3 +72,4 @@ for files in sim_df["Function"]:
     for x, y in my_dataloader:
         print(dist(P1(model, x.clone(), 0), model(x)).mean())
         print(dist(P0(model, x.clone(), 0), model(x)).mean())
+        break
