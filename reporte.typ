@@ -4,7 +4,7 @@
 )
 
 #title()
-*Autores:* Daniel, Darío Penagos
+*Autores:* Daniel Bocanegra: dflorezbo\@unal.edu.co, Darío Penagos: dpenagosv\@unal.edu.co
 
 
 = Introducción
@@ -51,17 +51,67 @@ for _ in range(4):
 ```
 ]
 
+
+
 == Reconocimiento simetrías
 
-Comenzamos revisando manualmente las funciones y anotando cada una de las simetrías que cumplen en el archivo `Invariante_por_Funcion.csv`.
+Comenzamos revisando manualmente las funciones y anotando cada una de las simetrías que cumplen en el archivo `Invariante_por_Funcion.csv`. En dicho archivo, se utilizan los siguientes strings para denotar las siguientes simetrías:
 
+- `P1`: $f(-x)=-f(x)$
+- `P0`: $f(-x)=f(x)$
+- `H`: $f(t x)=t^k f(x)$
+- `CCY1`: $f(x+a)=f(x)+f(a)$
+- `CCY2`: $f(a x) = f(x)f(a)$
+- `CCY3`: $f(x+a)=f(x)f(a)$
+- `CCY4`: $f(a x)=f(x)+f(a)$
+- `T`: $f(x+a)=f(x)$
+- `I`: $f(x,y)=f(y,x)$
+- `P`: $f(x^t)=f(x)$
+- `ESC`: $f(c x) = c f(x)$
 
+Por supuesto, la mayoría de éstas simetrías aplican a funciones de una sola variable, lo cual se contradice con el hecho de que la mayoría de las funciones que deseamos analizar tienen varias variables. En la práctica, símplemente consideramos si una función multivariada cumple éstas simetrías en uno de sus argumentos (dejando el resto de sus argumentos igual).
 
+Ahora bien. Sea $f$ una función que cumple una de éstas simetrías en alguna de sus componentes. Ésto significa que, para algún $k in NN$ existe una transformación $cal(L):C^k->C^k$ tal que $f=cal(L)(f)$. Ahora bien, sea $hat(f)$ la red neuronal que aproxima a $f$. Si $hat(f)$ es una buena aproximación de $f$, es razonable esperar que $hat(f) approx cal(L)(hat(f))$.
 
+Por todo lo anterior, nuestra forma de revisar si una función $f$ cumple una simetría dada, es computar $d = norm(hat(f)-cal(L)(hat(f)))_2$ y verificar si $d< epsilon$ para algún $epsilon$ suficientemente pequeño.
 
+En el archivo `reconocimiento_simetrías.py` computamos los valores $norm(hat(f)-cal(L)(hat(f)))_2$ para todas las simetrías que la función $f$ (la función que $hat(f)$ aproxima) cumple. Los resultados de éstos cómputos se encuentran en la carpeta `results`.
 
+= Análisis
 
+El histograma de las distancias obtenidas se muestra a continuación:
 
+#image("graphs/hist_distancias.svg",width: 50%)
+
+Aquí podemos ver que, en la mayoría de los casos (más del $80 %$), la distancia es bastante pequeña, un resultado positivo para nuestro método.
+
+Por otro lado, podemos contar la fracción de simetrías identificadas por nuestro método en función de $epsilon$:
+
+#image("graphs/frac_sim.svg")
+
+Si visualizamos la misma cantidad para cada simetría individualmente obtenemos los gráficos:
+
+#grid(
+  columns: 3,
+  image("graphs/P1_frac.svg"),
+  image("graphs/P0_frac.svg"),
+  image("graphs/H_frac.svg"),
+ )
+#grid(
+  columns: 4,
+  image("graphs/CCY1_frac.svg"),
+  image("graphs/ESC_frac.svg"),
+  image("graphs/I_frac.svg"),
+  image("graphs/T_frac.svg"),
+)
+
+En las anteriores gráficas podemos ver que la simetría más difícil de detectar con éste método parece ser `H`, mientras que la más fácil es `I`, la cual puede ser detectada usando cási cualquier $epsilon$ distinto de cero.
+
+= Conclusiones
+
+Parece ser que, en el caso de las funciones y simetrías escogidas para éste ejercicio, el método propuesto es relativamente eficiente para encontrar la mayoría de simetrías, y de hecho, es capaz de encontrar el $89.166%$ de las simetrías utilizadas con $epsilon=1$, un valor de épsilon relativamente pequeño.
+
+Por supuesto, a medida que $epsilon$ se hace más grande, se vuelve más y más fácil detectar simetrías (la taza de falsos negativos disminulle), pero también aumentará la tasa de falsos positivos. Debido a que, en éste texto, únicamente testeamos las tasas de falsos negativos, queda abierta la pregunta de si $epsilon=1$ es realmente un valor suficientemente bajo para mantener razonablemente baja la tasa de falsos positivos.
 
 
 
