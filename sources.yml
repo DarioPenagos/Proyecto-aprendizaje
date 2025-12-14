@@ -1,0 +1,19 @@
+
+article:
+  type: article
+  title: "AI Feynman: A physics-inspired method for symbolic regression"
+  author:
+    - "S. Udrescu"
+    - "M. Tegmark"
+
+
+lectures:
+  type: article
+  title: "The Feynman Lectures on Physics: The New Millennium Edition"
+  author:
+    - "R. Feynman"
+    - "R. Leighton"
+
+
+
+
