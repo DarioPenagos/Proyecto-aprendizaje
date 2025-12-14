@@ -8,6 +8,7 @@ import pandas as pd
 import torch
 import torch.nn.functional as F
 import torch.utils.data as utils
+from numpy import pi
 from torch import nn
 
 
@@ -35,62 +36,75 @@ def P1(f, X, n):
 
 
 def P0(f, X, n):
-    X[:,n] *= -1
+    X[:, n] *= -1
     return f(X)
 
-def H(f,X,t): return f(t*X)*t**(-X.shape[1])
 
-def CCY1(f,X,n,a):
+def H(f, X, t):
+    return f(t * X) * t ** (-X.shape[1])
+
+
+def CCY1(f, X, n, a):
     tmp = X.clone()
-    X[:,n]+=a
-    tmp[:,n]=a
-    return f(X)-f(tmp)
+    X[:, n] += a
+    tmp[:, n] = a
+    return f(X) - f(tmp)
 
-def CCY2(f,X,n,a):
+
+def CCY2(f, X, n, a):
     tmp = X.clone()
-    X[:,n]*=a
-    tmp[:,n]=a
-    return f(X)/f(tmp)
+    X[:, n] *= a
+    tmp[:, n] = a
+    return f(X) / f(tmp)
 
-def CCY3(f,X,n,a):
+
+def CCY3(f, X, n, a):
     tmp = X.clone()
-    X[:,n]+=a
-    tmp[:,n]=a
-    return f(X)/f(tmp)
+    X[:, n] += a
+    tmp[:, n] = a
+    return f(X) / f(tmp)
 
-def CCY4(f,X,n,a):
+
+def CCY4(f, X, n, a):
     tmp = X.clone()
-    X[:,n]*=a
-    tmp[:,n]=a
-    return f(X)-f(tmp)
+    X[:, n] *= a
+    tmp[:, n] = a
+    return f(X) - f(tmp)
 
-def T(f,X,n,a):
-    X[:,n]+=a
+
+def T(f, X, n, a):
+    X[:, n] += a
     return f(X)
 
-def I(f,X, p): return f(X[:,p])
 
-def P(f,X,n,t):
-    X**=t
-    return f(X)/t
+def I(f, X, p):
+    return f(X[:, p])
 
-def ESC(f,X,n,a):
-    X[:,n]*=a
-    return f(X)/a
+
+def P(f, X, t):
+    X **= t
+    return f(X) / t
+
+
+def ESC(f, X, n, a):
+    X[:, n] *= a
+    return f(X) / a
 
 
 bs = 1028
 
 sim_dict = {"P1": P1, "P0": P0}
 
-sim_df = pd.read_csv("Invariante_por_Funcion - Hoja 1.csv")
+sim_df = pd.read_csv("Invariante_por_Funcion.csv")
 
-for files in sim_df["Function"]:
+for indx in range(len(sim_df)):
+    files = sim_df.loc[indx]["Function"]
     Losses = []
     for title in os.listdir(f"NN_models/{files}/"):
         Losses.append(float(re.search("loss_(.+?).pt", title).group(1)))
     file = f"loss_{sorted(Losses)[0]}.pt"
 
+    print(files)
     txt = np.loadtxt(f"Feynman_with_units/{files}")
 
     n_variables = txt.shape[1] - 1
@@ -110,21 +124,51 @@ for files in sim_df["Function"]:
 
     dist = nn.PairwiseDistance()
     for [x] in my_dataloader:
-        eval_dist = lambda a: dist(a, model(x))
-        
-        for f in [P0,P1]:
-            print(f"sim: {f.__name__}, dist: {eval_dist(f(model,x.clone(),0)).mean()}")
-        
-        for f in [H]:
-            print(f"sim: {f.__name__}, dist: {eval_dist(f(model,x.clone(),3)).mean()}")
-        
-        for f in [CCY1,CCY2,CCY3,CCY4,T,P,ESC]:
-            print(f"sim: {f.__name__}, dist: {eval_dist(f(model,x.clone(),0, 0.3)).mean()}")
 
-        for f in [I]:
-            print(f"sim: {f.__name__}, dist: {eval_dist(f(model,x.clone(),[0,1])).mean()}")
-        
+        def eval_dist(a):
+            return dist(a, model(x)).mean().item()
 
+        if sim_df.loc[indx]["P1"] != "-1":
+            for n in map(lambda x: int(x), sim_df.loc[indx]["P1"].split(",")):
+                print(eval_dist(P1(model, x.clone(), n - 1)))
 
+        if sim_df.loc[indx]["P0"] != "-1":
+            for n in map(lambda x: int(x), sim_df.loc[indx]["P0"].split(",")):
+                print(eval_dist(P0(model, x.clone(), n - 1)))
 
+        if sim_df.loc[indx]["H"] != "-1":
+            print(eval_dist(H(model, x.clone(), 0.5)))
 
+        if sim_df.loc[indx]["CCY1"] != "-1":
+            for n in map(lambda x: int(x), sim_df.loc[indx]["CCY1"].split(",")):
+                print(eval_dist(CCY1(model, x.clone(), n - 1, 0.5)))
+
+        if sim_df.loc[indx]["CCY2"] != -1:
+            for n in map(lambda x: int(x), sim_df.loc[indx]["CCY2"].split(",")):
+                print(eval_dist(CCY2(model, x.clone(), n - 1, 0.5)))
+
+        if sim_df.loc[indx]["CCY3"] != -1:
+            for n in map(lambda x: int(x), sim_df.loc[indx]["CCY3"].split(",")):
+                print(eval_dist(CCY3(model, x.clone(), n - 1, 0.5)))
+
+        if sim_df.loc[indx]["CCY4"] != -1:
+            for n in map(lambda x: int(x), sim_df.loc[indx]["CCY4"].split(",")):
+                print(eval_dist(CCY4(model, x.clone(), n - 1, 0.5)))
+
+        if sim_df.loc[indx]["T"] != "-1":
+            for n in map(lambda x: eval(x), sim_df.loc[indx]["T"].split(",")):
+                if isinstance(n, int):
+                    print(eval_dist(T(model, x.clone(), n - 1, 0.5)))
+                else:
+                    print(eval_dist(T(model, x.clone(), 0, n)))
+
+        if sim_df.loc[indx]["I"] != -1:
+            print(eval_dist(I(model, x.clone(), [0, 1])))
+
+        if sim_df.loc[indx]["P"] != -1:
+            for t in map(lambda x: float(x), sim_df.loc[indx]["P"].split(",")):
+                print(P(model, x.clone(), t))
+
+        if sim_df.loc[indx]["ESC"] != "-1":
+            for n in map(lambda x: int(x), sim_df.loc[indx]["ESC"].split(",")):
+                print(eval_dist(ESC(model, x.clone(), n - 1, 0.5)))
